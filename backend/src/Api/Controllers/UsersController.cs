@@ -28,14 +28,14 @@ public class UsersController : ApiControllerBase
         return await Mediator.Send(new UserGetQuery { Id = id }, cancellationToken);
     }
 
-    [HttpGet("uniquename")]
-    public async Task<ActionResult<bool>> IsUniqueUserName([FromQuery] UserUniqueNameQuery query,
+    [HttpGet("uniqueUserName")]
+    public async Task<ActionResult<bool>> IsUniqueUserName([FromQuery] UserUniqueUserNameQuery query,
         CancellationToken cancellationToken)
     {
         return await Mediator.Send(query, cancellationToken);
     }
 
-    [HttpGet("uniqueemail")]
+    [HttpGet("uniqueEmail")]
     public async Task<ActionResult<bool>> IsUniqueEmail([FromQuery] UserUniqueEmailQuery query,
         CancellationToken cancellationToken)
     {
@@ -64,7 +64,7 @@ public class UsersController : ApiControllerBase
         return await Mediator.Send(new UserSetEmailCommand { Id = id, Email = data.Email }, cancellationToken);
     }
 
-    [HttpPut("{id}/username")]
+    [HttpPut("{id}/userName")]
     public async Task<ActionResult<Result>> SetUserName(
         [FromRoute] string id,
         [FromBody] UserSetUserNameDto data,
