@@ -37,6 +37,18 @@ public class UserCreateCommandHandler : IRequestHandler<UserCreateCommand, Resul
             });
         }
 
+        if (request.Email is not null)
+        {
+            var normalizedEmail = _userManager.NormalizeEmail(request.Email);
+            if (await _userManager.Users.AnyAsync(x => x.NormalizedEmail == normalizedEmail, cancellationToken))
+            {
+                throw new ValidationException(new List<ValidationFailure>
+                {
+                    new(nameof(request.Email), "Another user with the same e-mail already exists.")
+                });
+            }
+        }
+
         IdentityResult result = await _userManager.CreateAsync(new ApplicationUser
         {
             UserName = request.UserName,
