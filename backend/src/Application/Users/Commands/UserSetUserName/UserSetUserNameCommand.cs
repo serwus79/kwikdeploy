@@ -9,21 +9,21 @@ using Microsoft.EntityFrameworkCore;
 
 namespace KwikDeploy.Application.Users.Commands.UserSetName;
 
-public class UserSetNameCommand:IRequest<Result>
+public class UserSetUserNameCommand:IRequest<Result>
 {
-    public string Id { get; set; }
-    public string UserName { get; set; }
+    public string Id { get; set; } = default!;
+    public string UserName { get; set; } = default!;
 }
 
-public class UserSetNameCommandHandler : IRequestHandler<UserSetNameCommand, Result>
+public class UserSetUserNameCommandHandler : IRequestHandler<UserSetUserNameCommand, Result>
 {
     private readonly UserManager<ApplicationUser> _userManager;
 
-    public UserSetNameCommandHandler(UserManager<ApplicationUser> userManager)
+    public UserSetUserNameCommandHandler(UserManager<ApplicationUser> userManager)
     {
         _userManager = userManager;
     }
-    public async Task<Result> Handle(UserSetNameCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(UserSetUserNameCommand request, CancellationToken cancellationToken)
     {
         ApplicationUser? user = await _userManager.FindByIdAsync(request.Id);
         if (user is null)
@@ -49,7 +49,12 @@ public class UserSetNameCommandHandler : IRequestHandler<UserSetNameCommand, Res
             });
         }
 
-        
-        
+        var result = await _userManager.SetUserNameAsync(user, request.UserName);
+        if (!result.Succeeded)
+        {
+            return Result.Failure(result.Errors.Select(x => $"{x.Code}: ${x.Description}"));
+        }
+
+        return Result.Success();
     }
 }

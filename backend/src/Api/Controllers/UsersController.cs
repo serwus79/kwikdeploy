@@ -2,6 +2,8 @@
 using KwikDeploy.Application.Common.Models;
 using KwikDeploy.Application.Users.Commands.UserCreate;
 using KwikDeploy.Application.Users.Commands.UserDelete;
+using KwikDeploy.Application.Users.Commands.UserSetEmail;
+using KwikDeploy.Application.Users.Commands.UserSetName;
 using KwikDeploy.Application.Users.Queries.UserGet;
 using KwikDeploy.Application.Users.Queries.UserGetList;
 using KwikDeploy.Application.Users.Queries.UserUniqueEmailQuery;
@@ -32,7 +34,7 @@ public class UsersController : ApiControllerBase
     {
         return await Mediator.Send(query, cancellationToken);
     }
-    
+
     [HttpGet("uniqueemail")]
     public async Task<ActionResult<bool>> IsUniqueEmail([FromQuery] UserUniqueEmailQuery query,
         CancellationToken cancellationToken)
@@ -51,5 +53,23 @@ public class UsersController : ApiControllerBase
     public async Task<ActionResult<Result>> Delete(UserDeleteCommand command, CancellationToken cancellationToken)
     {
         return await Mediator.Send(command, cancellationToken);
+    }
+
+    [HttpPut("{id}/email")]
+    public async Task<ActionResult<Result>> SetEmail(
+        [FromRoute] string id,
+        [FromBody] UserSetEmailDto data,
+        CancellationToken cancellationToken)
+    {
+        return await Mediator.Send(new UserSetEmailCommand { Id = id, Email = data.Email }, cancellationToken);
+    }
+
+    [HttpPut("{id}/username")]
+    public async Task<ActionResult<Result>> SetUserName(
+        [FromRoute] string id,
+        [FromBody] UserSetUserNameDto data,
+        CancellationToken cancellationToken)
+    {
+        return await Mediator.Send(new UserSetUserNameCommand { Id = id, UserName = data.UserName }, cancellationToken);
     }
 }
