@@ -1,5 +1,6 @@
 using FluentValidation.Results;
 using KwikDeploy.Application.Common.Exceptions;
+using KwikDeploy.Application.Common.Interfaces;
 using KwikDeploy.Application.Common.Models;
 using KwikDeploy.Application.Users.Commands.UserSetEmail;
 using KwikDeploy.Domain.Identity;
@@ -18,10 +19,12 @@ public class UserSetUserNameCommand:IRequest<Result>
 public class UserSetUserNameCommandHandler : IRequestHandler<UserSetUserNameCommand, Result>
 {
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IIdentityService _identityService;
 
-    public UserSetUserNameCommandHandler(UserManager<ApplicationUser> userManager)
+    public UserSetUserNameCommandHandler(UserManager<ApplicationUser> userManager, IIdentityService identityService)
     {
         _userManager = userManager;
+        _identityService = identityService;
     }
     public async Task<Result> Handle(UserSetUserNameCommand request, CancellationToken cancellationToken)
     {
@@ -40,8 +43,7 @@ public class UserSetUserNameCommandHandler : IRequestHandler<UserSetUserNameComm
             });
         }
 
-        if (await _userManager.Users.AnyAsync(x => x.NormalizedUserName == normalizedUserName && x.Id != request.Id,
-                cancellationToken))
+        if (!await _identityService.IsUniqueUserName(request.UserName, request.Id, cancellationToken))
         {
             throw new ValidationException(new List<ValidationFailure>
             {
@@ -50,9 +52,11 @@ public class UserSetUserNameCommandHandler : IRequestHandler<UserSetUserNameComm
         }
 
         var result = await _userManager.SetUserNameAsync(user, request.UserName);
+        
         if (!result.Succeeded)
         {
-            return Result.Failure(result.Errors.Select(x => $"{x.Code}: ${x.Description}"));
+            var errors = result.Errors.ToDictionary(x => x.Code, x => x.Description);
+            throw new InternalServerErrorException(errors);
         }
 
         return Result.Success();

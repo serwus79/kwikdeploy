@@ -1362,13 +1362,26 @@
         }
       },
       "ResultWithIdOfString": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Result"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          }
+        ]
+      },
+      "Result": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "id": {
-            "type": "string",
-            "nullable": true
-          },
           "succeeded": {
             "type": "boolean"
           },
@@ -1413,21 +1426,6 @@
             "maxLength": 255,
             "minLength": 1,
             "nullable": false
-          }
-        }
-      },
-      "Result": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "succeeded": {
-            "type": "boolean"
-          },
-          "errors": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           }
         }
       },

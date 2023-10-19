@@ -1888,12 +1888,11 @@ export interface IUserDto {
     accessFailedCount?: number;
 }
 
-export class ResultWithIdOfString implements IResultWithIdOfString {
-    id?: string | undefined;
+export class Result implements IResult {
     succeeded?: boolean;
     errors?: string[];
 
-    constructor(data?: IResultWithIdOfString) {
+    constructor(data?: IResult) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -1904,7 +1903,6 @@ export class ResultWithIdOfString implements IResultWithIdOfString {
 
     init(_data?: any) {
         if (_data) {
-            this.id = _data["id"];
             this.succeeded = _data["succeeded"];
             if (Array.isArray(_data["errors"])) {
                 this.errors = [] as any;
@@ -1914,16 +1912,15 @@ export class ResultWithIdOfString implements IResultWithIdOfString {
         }
     }
 
-    static fromJS(data: any): ResultWithIdOfString {
+    static fromJS(data: any): Result {
         data = typeof data === 'object' ? data : {};
-        let result = new ResultWithIdOfString();
+        let result = new Result();
         result.init(data);
         return result;
     }
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
         data["succeeded"] = this.succeeded;
         if (Array.isArray(this.errors)) {
             data["errors"] = [];
@@ -1934,10 +1931,42 @@ export class ResultWithIdOfString implements IResultWithIdOfString {
     }
 }
 
-export interface IResultWithIdOfString {
-    id?: string | undefined;
+export interface IResult {
     succeeded?: boolean;
     errors?: string[];
+}
+
+export class ResultWithIdOfString extends Result implements IResultWithIdOfString {
+    id?: string | undefined;
+
+    constructor(data?: IResultWithIdOfString) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.id = _data["id"];
+        }
+    }
+
+    static override fromJS(data: any): ResultWithIdOfString {
+        data = typeof data === 'object' ? data : {};
+        let result = new ResultWithIdOfString();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IResultWithIdOfString extends IResult {
+    id?: string | undefined;
 }
 
 export class UserCreateCommand implements IUserCreateCommand {
@@ -1986,54 +2015,6 @@ export interface IUserCreateCommand {
     email?: string | undefined;
     password: string;
     confirmPassword: string;
-}
-
-export class Result implements IResult {
-    succeeded?: boolean;
-    errors?: string[];
-
-    constructor(data?: IResult) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.succeeded = _data["succeeded"];
-            if (Array.isArray(_data["errors"])) {
-                this.errors = [] as any;
-                for (let item of _data["errors"])
-                    this.errors!.push(item);
-            }
-        }
-    }
-
-    static fromJS(data: any): Result {
-        data = typeof data === 'object' ? data : {};
-        let result = new Result();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["succeeded"] = this.succeeded;
-        if (Array.isArray(this.errors)) {
-            data["errors"] = [];
-            for (let item of this.errors)
-                data["errors"].push(item);
-        }
-        return data;
-    }
-}
-
-export interface IResult {
-    succeeded?: boolean;
-    errors?: string[];
 }
 
 export class UserDeleteCommand implements IUserDeleteCommand {

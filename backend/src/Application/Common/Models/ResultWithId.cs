@@ -1,33 +1,26 @@
 ﻿namespace KwikDeploy.Application.Common.Models;
 
-public class ResultWithId<T>
+public class ResultWithId<T>:Result
 {
-    internal ResultWithId(T id, bool succeeded, IEnumerable<string> errors)
+    internal ResultWithId(T id, bool succeeded, IEnumerable<string> errors) : base(succeeded, errors)
     {
         Id = id;
-        Succeeded = succeeded;
-        Errors = errors.ToArray();
     }
 
-    internal ResultWithId(bool succeeded, IEnumerable<string> errors)
+    internal ResultWithId(bool succeeded, IEnumerable<string> errors) : base(succeeded, errors)
     {
-        Succeeded = succeeded;
-        Errors = errors.ToArray();
     }
 
     public T? Id { get; set; }
 
-    public bool Succeeded { get; init; }
-
-    public string[] Errors { get; init; }
 
     public static ResultWithId<T> Success(T id)
     {
         return new ResultWithId<T>(id, true, Array.Empty<string>());
     }
-
-    public static ResultWithId<T> Failure(IEnumerable<string> errors)
+    
+    public static new Result Failure(IEnumerable<string> errors)
     {
-        return new ResultWithId<T>(false, errors);
+        return new ResultWithId<T>(default!, false, errors);
     }
 }

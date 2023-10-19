@@ -1,5 +1,6 @@
 using FluentValidation.Results;
 using KwikDeploy.Application.Common.Exceptions;
+using KwikDeploy.Application.Common.Interfaces;
 using KwikDeploy.Application.Common.Models;
 using KwikDeploy.Domain.Identity;
 using MediatR;
@@ -17,21 +18,23 @@ public class UserSetEmailCommand : IRequest<Result>
 public class UserSetEmailCommandHandler : IRequestHandler<UserSetEmailCommand, Result>
 {
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IIdentityService _identityService;
 
-    public UserSetEmailCommandHandler(UserManager<ApplicationUser> userManager)
+    public UserSetEmailCommandHandler(UserManager<ApplicationUser> userManager, IIdentityService identityService)
     {
         _userManager = userManager;
+        _identityService = identityService;
     }
 
     public async Task<Result> Handle(UserSetEmailCommand request, CancellationToken cancellationToken)
     {
-        ApplicationUser? user = await _userManager.FindByIdAsync(request.Id);
+        var user = await _userManager.FindByIdAsync(request.Id);
         if (user is null)
         {
             throw new NotFoundException(nameof(UserSetEmailCommand.Id), request.Id);
         }
 
-        string normalizedEmail = _userManager.NormalizeEmail(request.Email);
+        var normalizedEmail = _userManager.NormalizeEmail(request.Email);
         if (user.NormalizedEmail.Equals(normalizedEmail))
         {
             throw new ValidationException(new List<ValidationFailure>
@@ -40,7 +43,7 @@ public class UserSetEmailCommandHandler : IRequestHandler<UserSetEmailCommand, R
             });
         }
 
-        if (await _userManager.Users.AnyAsync(x => x.NormalizedEmail == normalizedEmail, cancellationToken))
+        if (!await _identityService.IsUniqueEmail(request.Email, request.Id, cancellationToken))
         {
             throw new ValidationException(new List<ValidationFailure>
             {
@@ -48,7 +51,7 @@ public class UserSetEmailCommandHandler : IRequestHandler<UserSetEmailCommand, R
             });
         }
 
-        IdentityResult result = await _userManager.SetEmailAsync(user, request.Email);
+        var result = await _userManager.SetEmailAsync(user, request.Email);
         if (!result.Succeeded)
         {
             return Result.Failure(result.Errors.Select(x => $"{x.Code}: ${x.Description}"));

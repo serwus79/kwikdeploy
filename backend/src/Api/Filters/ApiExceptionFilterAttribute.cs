@@ -1,4 +1,5 @@
-﻿using KwikDeploy.Application.Common.Exceptions;
+﻿using Api.Common;
+using KwikDeploy.Application.Common.Exceptions;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -18,7 +19,7 @@ public class ApiExceptionFilterAttribute : ExceptionFilterAttribute
                 { typeof(NotFoundException), HandleNotFoundException },
                 { typeof(UnauthorizedAccessException), HandleUnauthorizedAccessException },
                 { typeof(ForbiddenAccessException), HandleForbiddenAccessException },
-                
+                { typeof(InternalServerErrorException), HandleInternalServerErrorException }
             };
     }
 
@@ -122,6 +123,22 @@ public class ApiExceptionFilterAttribute : ExceptionFilterAttribute
         {
             StatusCode = StatusCodes.Status403Forbidden
         };
+
+        context.ExceptionHandled = true;
+    }
+    
+    private void HandleInternalServerErrorException(ExceptionContext context)
+    {
+        var exception = (InternalServerErrorException)context.Exception;
+        var details = new ProblemDetailsWithErrors(exception.Errors)
+        {
+            Status = StatusCodes.Status500InternalServerError,
+            Title = "Internal Server Error",
+            Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.6.1", 
+            Detail = exception.Message
+        };
+        
+        context.Result = new ObjectResult(details) { StatusCode = StatusCodes.Status500InternalServerError};
 
         context.ExceptionHandled = true;
     }

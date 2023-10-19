@@ -1,4 +1,5 @@
-﻿using KwikDeploy.Application.Common.Interfaces;
+﻿using KwikDeploy.Application.Common.Exceptions;
+using KwikDeploy.Application.Common.Interfaces;
 using KwikDeploy.Application.Common.Models;
 using KwikDeploy.Domain.Identity;
 using Microsoft.AspNetCore.Authorization;
@@ -30,7 +31,7 @@ public class IdentityService : IIdentityService
         return user.UserName;
     }
 
-    public async Task<(Result Result, string UserId)> CreateUserAsync(string userName, string password)
+    public async Task<ResultWithId<string>> CreateUserAsync(string userName, string password)
     {
         var user = new ApplicationUser
         {
@@ -40,7 +41,12 @@ public class IdentityService : IIdentityService
 
         var result = await _userManager.CreateAsync(user, password);
 
-        return (result.ToApplicationResult(), user.Id);
+        if (!result.Succeeded)
+        {
+            throw new InternalServerErrorException(result.Errors.ToDictionary(x=>x.Code, x=>x.Description));
+        }
+
+        return ResultWithId<string>.Success(user!.Id);
     }
 
     public async Task<bool> IsInRoleAsync(string userId, string role)
@@ -66,17 +72,43 @@ public class IdentityService : IIdentityService
         return result.Succeeded;
     }
 
-    public async Task<Result> DeleteUserAsync(string userId)
+    public async Task<Result> DeleteUserAsync(string userId, CancellationToken cancellationToken = default)
     {
-        var user = _userManager.Users.SingleOrDefault(u => u.Id == userId);
+        var user = await _userManager.Users.SingleOrDefaultAsync(u => u.Id == userId, cancellationToken: cancellationToken);
 
-        return user != null ? await DeleteUserAsync(user) : Result.Success();
+        if (user is null)
+        {
+            throw new NotFoundException("User", userId);
+        }
+
+        return await DeleteUserAsync(user);
+    }
+    
+    public async Task<bool> IsUniqueUserName(string userName, string? userId, CancellationToken cancellationToken = default)
+    {
+        var normalizedUserName = _userManager.NormalizeName(userName);
+
+        return !await _userManager.Users.AnyAsync(x => x.NormalizedUserName == normalizedUserName && x.Id != userId,
+        cancellationToken);
+    }
+    
+    public async Task<bool> IsUniqueEmail(string email, string? userId, CancellationToken cancellationToken = default)
+    {
+        var normalizedEmail = _userManager.NormalizeEmail(email);
+        
+        return !await _userManager.Users.AnyAsync(x => x.NormalizedEmail == normalizedEmail && x.Id != userId,
+        cancellationToken);
     }
 
     public async Task<Result> DeleteUserAsync(ApplicationUser user)
     {
         var result = await _userManager.DeleteAsync(user);
 
-        return result.ToApplicationResult();
+        if (!result.Succeeded)
+        {
+            throw new InternalServerErrorException(result.Errors.ToDictionary(x => x.Code, x => x.Description));
+        }
+
+        return Result.Success();
     }
 }
