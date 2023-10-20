@@ -1,5 +1,6 @@
 ﻿using FluentValidation.Results;
 using KwikDeploy.Application.Common.Exceptions;
+using KwikDeploy.Application.Common.Interfaces;
 using KwikDeploy.Application.Common.Models;
 using KwikDeploy.Domain.Exceptions;
 using KwikDeploy.Domain.Identity;
@@ -19,59 +20,29 @@ public record UserCreate : IRequest<Result<string>>
 public record UserCreateBody
 {
     public string UserName { get; set; } = default!;
-    public string? Email { get; set; }
     public string Password { get; set; } = default!;
     public string ConfirmPassword { get; set; } = default!;
 }
 
 public class UserCreateHandler : IRequestHandler<UserCreate, Result<string>>
 {
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IIdentityService _identityService;
 
-    public UserCreateHandler(UserManager<ApplicationUser> userManager)
+    public UserCreateHandler(IIdentityService identityService)
     {
-        _userManager = userManager;
+        _identityService = identityService;
     }
 
     public async Task<Result<string>> Handle(UserCreate request, CancellationToken cancellationToken)
     {
-        string normalizedUserName = _userManager.NormalizeName(request.Body.UserName);
-        if (await _userManager.Users.AnyAsync(x => x.NormalizedUserName == normalizedUserName, cancellationToken))
+        if (!await _identityService.IsUniqueNameAsync(request.Body.UserName, cancellationToken: cancellationToken))
         {
             throw new ValidationException(new List<ValidationFailure>
             {
                 new(nameof(request.Body.UserName), "Another user with the same name already exists.")
             });
         }
-
-        if (request.Body.Email is not null)
-        {
-            var normalizedEmail = _userManager.NormalizeEmail(request.Body.Email);
-            if (await _userManager.Users.AnyAsync(x => x.NormalizedEmail == normalizedEmail, cancellationToken))
-            {
-                throw new ValidationException(new List<ValidationFailure>
-                {
-                    new(nameof(request.Body.Email), "Another user with the same e-mail already exists.")
-                });
-            }
-        }
-
-        IdentityResult result = await _userManager.CreateAsync(new ApplicationUser
-        {
-            UserName = request.Body.UserName,
-            Email = request.Body.Email,
-            NormalizedUserName = normalizedUserName,
-            NormalizedEmail = _userManager.NormalizeEmail(request.Body.Email)
-        });
-
-        if (!result.Succeeded)
-        {
-            IEnumerable<string> err = result.Errors.Select(x => x.Code);
-            throw new UserCreateErrorException();
-        }
-
-        ApplicationUser? user = await _userManager.FindByNameAsync(normalizedUserName);
-
-        return new Result<string>(user!.Id);
+        
+        return await _identityService.CreateUserAsync(request.Body.UserName, request.Body.Password, cancellationToken);
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace KwikDeploy.Application.Common.Interfaces;
+﻿using KwikDeploy.Application.Common.Models;
+
+namespace KwikDeploy.Application.Common.Interfaces;
 
 public interface IIdentityService
 {
@@ -7,8 +9,14 @@ public interface IIdentityService
     Task<bool> IsInRoleAsync(string userId, string role);
 
     Task<bool> AuthorizeAsync(string userId, string policyName);
+    
+    Task<Result<string>> CreateUserAsync(string userName, string password, CancellationToken cancellationToken = default);
 
-    //Task<(Result Result, string UserId)> CreateUserAsync(string userName, string password);
+    Task<bool> IsUniqueNameAsync(string userName, string? userId = null, CancellationToken cancellationToken = default);
 
-    //Task<Result> DeleteUserAsync(string userId);
+    Task<bool> IsUserExist(string userId, CancellationToken cancellationToken = default);
+
+    Task SetUserNameAsync(string userId, string userName, CancellationToken cancellationToken = default);
+
+    Task DeleteUserAsync(string userId, CancellationToken cancellationToken = default);
 }

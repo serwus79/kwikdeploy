@@ -1,5 +1,6 @@
 using FluentValidation.Results;
 using KwikDeploy.Application.Common.Exceptions;
+using KwikDeploy.Application.Common.Interfaces;
 using KwikDeploy.Domain.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -24,44 +25,29 @@ public record UserSetUserNameBody
 
 public class UserSetUserNameHandler : IRequestHandler<UserSetUserName>
 {
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IIdentityService _identityService;
 
-    public UserSetUserNameHandler(UserManager<ApplicationUser> userManager)
+
+    public UserSetUserNameHandler(IIdentityService _identityService)
     {
-        _userManager = userManager;
+        this._identityService = _identityService;
     }
 
     public async Task Handle(UserSetUserName request, CancellationToken cancellationToken)
     {
-        ApplicationUser? user = await _userManager.FindByIdAsync(request.Id);
-        if (user is null)
+        if (!await _identityService.IsUserExist(request.Id, cancellationToken))
         {
-            throw new NotFoundException(nameof(UserSetEmail.Id), request.Id);
+            throw new NotFoundException(nameof(request.Id), request.Id);
         }
 
-        var normalizedUserName = _userManager.NormalizeName(request.Body.UserName);
-        if (user.NormalizedUserName!.Equals(normalizedUserName))
+        if (!await _identityService.IsUniqueNameAsync(request.Body.UserName, cancellationToken: cancellationToken))
         {
             throw new ValidationException(new List<ValidationFailure>
             {
-                new(nameof(request.Body.UserName), "The new user name must be different from the current one.")
-            });
+                new(nameof(request.Body.UserName), "The new user name must be different from the current one or user with the same user name already exists.")
+            });         
         }
 
-        if (await _userManager.Users.AnyAsync(x => x.NormalizedUserName == normalizedUserName && x.Id != request.Id,
-                cancellationToken))
-        {
-            throw new ValidationException(new List<ValidationFailure>
-            {
-                new(nameof(request.Body.UserName), "Another user with the same user name already exists.")
-            });
-        }
-
-        var result = await _userManager.SetUserNameAsync(user, request.Body.UserName);
-        if (!result.Succeeded)
-        {
-            var validationErrors = result.Errors.Select(x => new ValidationFailure("", $"{x.Code}: ${x.Description}"));
-            throw new ValidationException(new List<ValidationFailure>(validationErrors));
-        }
+        await _identityService.SetUserNameAsync(request.Id, request.Body.UserName, cancellationToken);
     }
 }

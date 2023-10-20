@@ -1,5 +1,6 @@
 ﻿using KwikDeploy.Application.Common.Exceptions;
 using KwikDeploy.Application.Common.Interfaces;
+using KwikDeploy.Application.Common.Models;
 using KwikDeploy.Domain.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -30,24 +31,6 @@ public class IdentityService : IIdentityService
         return user.UserName;
     }
 
-    public async Task<string> CreateUserAsync(string userName, string password)
-    {
-        var user = new ApplicationUser
-        {
-            UserName = userName,
-            Email = userName,
-        };
-
-        var result = await _userManager.CreateAsync(user, password);
-
-        if (!result.Succeeded)
-        {
-            throw new IdentityException(result.Errors);
-        }
-
-        return user.Id;
-    }
-
     public async Task<bool> IsInRoleAsync(string userId, string role)
     {
         var user = _userManager.Users.SingleOrDefault(u => u.Id == userId);
@@ -70,15 +53,59 @@ public class IdentityService : IIdentityService
 
         return result.Succeeded;
     }
-
-    public async Task DeleteUserAsync(string userId)
+    public async Task<Result<string>> CreateUserAsync(string userName, string password, CancellationToken cancellationToken = default)
     {
-        var user = _userManager.Users.SingleOrDefault(u => u.Id == userId);
-
-        if (user is not null)
+        var user = new ApplicationUser
         {
-            await DeleteUserAsync(user);
+            UserName = userName,
+            Email = userName,
+        };
+
+        var result = await _userManager.CreateAsync(user, password);
+
+        if (!result.Succeeded)
+        {
+            throw new IdentityException(result.Errors);
         }
+
+        return new Result<string>(user.Id);
+    }
+
+    public async Task<bool> IsUniqueNameAsync(string userName, string? userId = null, CancellationToken cancellationToken = default)
+    {
+        var normalizedUserName = _userManager.NormalizeName(userName);
+        return await _userManager.Users.AnyAsync(x => x.NormalizedUserName == normalizedUserName && x.Id != userId, cancellationToken: cancellationToken);
+    }
+    public async Task<bool> IsUserExist(string userId, CancellationToken cancellationToken = default)
+    {
+        return await _userManager.Users.AnyAsync(x => x.Id == userId, cancellationToken: cancellationToken);
+    }
+
+    public async Task SetUserNameAsync(string userId, string userName, CancellationToken cancellationToken = default)
+    {
+
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user is null)
+        {
+            throw new NotFoundException("User", userId);
+        }
+        
+        var result = await _userManager.SetUserNameAsync(user, userName);
+        
+        if (!result.Succeeded)
+        {
+            throw new IdentityException(result.Errors);
+        }
+    }
+    public async Task DeleteUserAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user is null)
+        {
+            throw new NotFoundException("User", userId);
+        }
+
+        await DeleteUserAsync(user);
     }
 
     public async Task DeleteUserAsync(ApplicationUser user)

@@ -20,7 +20,6 @@ public class UserGetHandler : IRequestHandler<UserGet, UserDto>
     public UserGetHandler(UserManager<ApplicationUser> userManager)
     {
         _userManager = userManager;
-
     }
 
     public async Task<UserDto> Handle(UserGet request, CancellationToken cancellationToken)

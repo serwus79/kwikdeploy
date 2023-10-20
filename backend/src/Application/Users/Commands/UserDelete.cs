@@ -1,4 +1,6 @@
-﻿using KwikDeploy.Domain.Identity;
+﻿using KwikDeploy.Application.Common.Exceptions;
+using KwikDeploy.Application.Common.Interfaces;
+using KwikDeploy.Domain.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,21 +15,15 @@ public class UserDelete : IRequest
 
 public class UserDeleteHandler : IRequestHandler<UserDelete>
 {
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IIdentityService _identityService;
 
-    public UserDeleteHandler(UserManager<ApplicationUser> userManager)
+    public UserDeleteHandler(IIdentityService identityService)
     {
-        _userManager = userManager;
-
+        _identityService = identityService;
     }
 
     public async Task Handle(UserDelete request, CancellationToken cancellationToken)
     {
-        var user = await _userManager.FindByIdAsync(request.Id);
-        if (user is null)
-        {
-            throw new ArgumentException("User not found", nameof(request.Id));
-        }
-        await _userManager.DeleteAsync(user);
+        await _identityService.DeleteUserAsync(request.Id, cancellationToken);
     }
 }

@@ -48,15 +48,6 @@ public class UsersController : ApiControllerBase
         return NoContent();
     }
 
-    [HttpPut("{Id}/email")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<ActionResult> SetEmail(UserSetEmail command, CancellationToken cancellationToken)
-    {
-        await Mediator.Send(command, cancellationToken);
-
-        return NoContent();
-    }
-
     [HttpPut("{Id}/userName")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<ActionResult> SetUserName(UserSetUserName command, CancellationToken cancellationToken)
