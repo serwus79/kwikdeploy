@@ -1804,7 +1804,6 @@ export interface IUserDto {
 
 export class UserCreateBody implements IUserCreateBody {
     userName?: string;
-    email?: string | undefined;
     password?: string;
     confirmPassword?: string;
 
@@ -1820,7 +1819,6 @@ export class UserCreateBody implements IUserCreateBody {
     init(_data?: any) {
         if (_data) {
             this.userName = _data["userName"];
-            this.email = _data["email"];
             this.password = _data["password"];
             this.confirmPassword = _data["confirmPassword"];
         }
@@ -1836,7 +1834,6 @@ export class UserCreateBody implements IUserCreateBody {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["userName"] = this.userName;
-        data["email"] = this.email;
         data["password"] = this.password;
         data["confirmPassword"] = this.confirmPassword;
         return data;
@@ -1845,45 +1842,8 @@ export class UserCreateBody implements IUserCreateBody {
 
 export interface IUserCreateBody {
     userName?: string;
-    email?: string | undefined;
     password?: string;
     confirmPassword?: string;
-}
-
-export class UserSetEmailBody implements IUserSetEmailBody {
-    email?: string;
-
-    constructor(data?: IUserSetEmailBody) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.email = _data["email"];
-        }
-    }
-
-    static fromJS(data: any): UserSetEmailBody {
-        data = typeof data === 'object' ? data : {};
-        let result = new UserSetEmailBody();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["email"] = this.email;
-        return data;
-    }
-}
-
-export interface IUserSetEmailBody {
-    email?: string;
 }
 
 export class UserSetUserNameBody implements IUserSetUserNameBody {

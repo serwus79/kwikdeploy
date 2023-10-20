@@ -74,7 +74,7 @@ public class IdentityService : IIdentityService
     public async Task<bool> IsUniqueNameAsync(string userName, string? userId = null, CancellationToken cancellationToken = default)
     {
         var normalizedUserName = _userManager.NormalizeName(userName);
-        return await _userManager.Users.AnyAsync(x => x.NormalizedUserName == normalizedUserName && x.Id != userId, cancellationToken: cancellationToken);
+        return !await _userManager.Users.AnyAsync(x => x.NormalizedUserName == normalizedUserName && x.Id != userId, cancellationToken: cancellationToken);
     }
     public async Task<bool> IsUserExist(string userId, CancellationToken cancellationToken = default)
     {

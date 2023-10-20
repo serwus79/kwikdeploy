@@ -7,6 +7,6 @@ public class UserSetUserNameValidator : AbstractValidator<UserSetUserName>
     public UserSetUserNameValidator()
     {
         RuleFor(v => v.Id).NotEmpty();
-        RuleFor(v => v.Body.UserName).NotEmpty();
+        RuleFor(v => v.Body.UserName).NotEmpty().EmailAddress();
     }
 }

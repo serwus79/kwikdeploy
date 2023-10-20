@@ -2216,47 +2216,6 @@
         ]
       }
     },
-    "/Users/{Id}/email": {
-      "put": {
-        "tags": [
-          "Users"
-        ],
-        "operationId": "Users_SetEmail",
-        "parameters": [
-          {
-            "name": "Id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "x-position": 1
-          }
-        ],
-        "requestBody": {
-          "x-name": "Body",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserSetEmailBody"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 2
-        },
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "JWT": []
-          }
-        ]
-      }
-    },
     "/Users/{Id}/userName": {
       "put": {
         "tags": [
@@ -2990,23 +2949,10 @@
           "userName": {
             "type": "string"
           },
-          "email": {
-            "type": "string",
-            "nullable": true
-          },
           "password": {
             "type": "string"
           },
           "confirmPassword": {
-            "type": "string"
-          }
-        }
-      },
-      "UserSetEmailBody": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "email": {
             "type": "string"
           }
         }
